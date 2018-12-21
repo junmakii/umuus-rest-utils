@@ -36,7 +36,7 @@ Example
 Usage
 -----
 
-    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}}'
+    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}, "database_options": {"url": "http://couchdb:5984"}}'
 
 Authors
 -------
@@ -59,9 +59,11 @@ import logging
 logger = logging.getLogger(__name__)
 import inspect
 import attr
+import urllib.parse
 import umuus_utils
 import flask
 import gunicorn.app.base
+import requests
 __version__ = '0.1'
 __url__ = 'https://github.com/junmakii/umuus-rest-utils'
 __author__ = 'Jun Makii'
@@ -74,6 +76,7 @@ __install_requires__ = [
     'attrs>=18.2.0',
     'fire>=0.1.3',
     'gunicorn>=19.9.0',
+    'requests>=2.20.1',
     'umuus-utils@git+https://github.com/junmakii/umuus-utils.git#egg=umuus_utils-1.0',
 ]
 __dependency_links__ = []
@@ -95,6 +98,33 @@ __static_files__ = {}
 __extra_options__ = {}
 __download_url__ = ''
 __all__ = []
+
+
+def basic_auth(
+        fn,
+        url,
+):
+    __locals = type('Locals', (), locals())
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        auth = flask.request.authorization
+        parsed_url = urllib.parse.urlparse(url)
+        scheme = parsed_url.scheme
+        host, port = parsed_url.netloc.split(':')
+        if (not flask.request.authorization or requests.request(
+                'HEAD',
+                '{scheme}://{auth.username}:{auth.password}@{host}:{port}'.
+                format(**locals()),
+        ).status_code != 200):
+            return flask.Response(
+                'Could not verify your access level for that URL.\n'
+                'You have to login with proper credentials', 401,
+                {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        else:
+            return fn(*args, **kwargs)
+
+    return wrapper
 
 
 def json_encode_value(s):
@@ -175,6 +205,7 @@ flask.Flask.__init__ = __init__(self, import_name, static_url_path=None, static_
     module_object = attr.ib(None)
     static_folder = attr.ib(None)
     static_url_path = attr.ib('')
+    database_options = attr.ib(dict(url='http://couchdb:5984'))
 
     def __attrs_post_init__(self):
         self.options['bind'] = (self.options.get('bind')
@@ -194,7 +225,8 @@ flask.Flask.__init__ = __init__(self, import_name, static_url_path=None, static_
         }
         logger.info(self.functions)
         for key, value in self.functions.items():
-            self.app.route(key)(wrapper(value))
+            self.app.route(key)(basic_auth(
+                wrapper(value), **self.database_options))
 
     def run(self):
         _self = self

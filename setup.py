@@ -27,6 +27,7 @@ setup(
     install_requires=['attrs>=18.2.0',
  'fire>=0.1.3',
  'gunicorn>=19.9.0',
+ 'requests>=2.20.1',
  'umuus-utils@git+https://github.com/junmakii/umuus-utils.git#egg=umuus_utils-1.0'],
     dependency_links=[],
     classifiers=[],
@@ -65,7 +66,8 @@ setup(
  '\n'
  '    $ python -m umuus_rest_utils run --rest_server \'{"module": "MY_MODULE", '
  '"host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", '
- '"keyfile": "server.key"}}\'\n'
+ '"keyfile": "server.key"}, "database_options": {"url": '
+ '"http://couchdb:5984"}}\'\n'
  '\n'
  'Authors\n'
  '-------\n'

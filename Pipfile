@@ -12,5 +12,6 @@ name = "pypi"
 attrs = ">=18.2.0"
 fire = ">=0.1.3"
 gunicorn = ">=19.9.0"
+requests = ">=2.20.1"
 umuus-utils@git = "+https://github.com/junmakii/umuus-utils.git#egg=umuus_utils-1.0"
 
