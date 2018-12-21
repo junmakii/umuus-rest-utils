@@ -36,7 +36,11 @@ Example
 Usage
 -----
 
-    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}, "database_options": {"url": "http://couchdb:5984"}}'
+    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}, "auth_database_options": {"url": "http://couchdb:5984"}}'
+
+Without basic auth:
+
+    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}}'
 
 Authors
 -------
@@ -205,7 +209,7 @@ flask.Flask.__init__ = __init__(self, import_name, static_url_path=None, static_
     module_object = attr.ib(None)
     static_folder = attr.ib(None)
     static_url_path = attr.ib('')
-    database_options = attr.ib(dict(url='http://couchdb:5984'))
+    auth_database_options = attr.ib(None)
 
     def __attrs_post_init__(self):
         self.options['bind'] = (self.options.get('bind')
@@ -225,8 +229,10 @@ flask.Flask.__init__ = __init__(self, import_name, static_url_path=None, static_
         }
         logger.info(self.functions)
         for key, value in self.functions.items():
-            self.app.route(key)(basic_auth(
-                wrapper(value), **self.database_options))
+            fn = wrapper(value)
+            if self.auth_database_options:
+                fn = basic_auth(fn, **self.auth_database_options)
+            self.app.route(key)(fn)
 
     def run(self):
         _self = self

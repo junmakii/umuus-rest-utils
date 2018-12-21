@@ -17,7 +17,11 @@ Example
 Usage
 -----
 
-    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}, "database_options": {"url": "http://couchdb:5984"}}'
+    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}, "auth_database_options": {"url": "http://couchdb:5984"}}'
+
+Without basic auth:
+
+    $ python -m umuus_rest_utils run --rest_server '{"module": "MY_MODULE", "host": "0.0.0.0", "port": 8021, "options": {"certfile": "server.crt", "keyfile": "server.key"}}'
 
 Authors
 -------
